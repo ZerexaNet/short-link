@@ -115,6 +115,7 @@ export default function ZeroWidthLinkPage() {
   const [url, setUrl] = useState('');
   const [encoded, setEncoded] = useState('');
   const [copied, setCopied] = useState(false);
+  const [copiedHistoryId, setCopiedHistoryId] = useState<string | null>(null);
   const [showEncoded, setShowEncoded] = useState(false);
   const [history, setHistory] = useState<HistoryItem[]>(() => getHistory());
   const [isRedirecting, setIsRedirecting] = useState(routeMode === 'redirect');
@@ -177,6 +178,18 @@ export default function ZeroWidthLinkPage() {
       toast.error(t.toastCopyFailed);
     }
   }, [encoded, origin, t]);
+
+  const handleCopyHistory = useCallback(async (item: HistoryItem) => {
+    const full = `${origin}/${item.encodedPath}`;
+    try {
+      await navigator.clipboard.writeText(full);
+      setCopiedHistoryId(item.id);
+      toast.success(t.toastCopied);
+      setTimeout(() => setCopiedHistoryId(null), 2000);
+    } catch {
+      toast.error(t.toastCopyFailed);
+    }
+  }, [origin, t]);
 
   const handleTest = useCallback(() => {
     window.open(`${origin}/${encoded}`, '_blank');
@@ -544,18 +557,36 @@ export default function ZeroWidthLinkPage() {
                         {new Date(item.createdAt).toLocaleString(t.dateLocale)}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive h-8 w-8 p-0 shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteHistory(item.id);
-                      }}
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopyHistory(item);
+                        }}
+                        aria-label={t.copyHistory}
+                      >
+                        {copiedHistoryId === item.id ? (
+                          <Check className="w-3.5 h-3.5" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive h-8 w-8 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteHistory(item.id);
+                        }}
+                        aria-label="Delete"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>

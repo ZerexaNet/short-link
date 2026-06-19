@@ -36,8 +36,11 @@
 
 | 时区 | 语言 |
 |------|------|
-| `Asia/Shanghai`（大陆东部：北京、上海、重庆、哈尔滨等） | 简体中文 |
-| `Asia/Urumqi`（新疆：乌鲁木齐、喀什等） | 简体中文 |
+| `Asia/Shanghai`（北京、上海、广州、成都、武汉等） | 简体中文 |
+| `Asia/Urumqi`（新疆：乌鲁木齐、喀什等，UTC+6） | 简体中文 |
+| `Asia/Harbin`（哈尔滨，部分 tzdata 版本独立） | 简体中文 |
+| `Asia/Chongqing`（重庆，部分 tzdata 版本独立） | 简体中文 |
+| `Asia/Kashgar`（喀什，旧版 tzdata 中 Urumqi 别名） | 简体中文 |
 | `Asia/Hong_Kong`、`Asia/Macau`、`Asia/Taipei`（港澳台） | 繁体中文 |
 | 其他所有地区 | English |
 

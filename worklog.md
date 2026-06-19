@@ -66,3 +66,25 @@ Work Log:
 Stage Summary:
 - i18n 系统：按时区自动检测，无需用户手动切换
 - README.md 全中文，含三平台部署教程和 i18n 说明
+
+---
+Task ID: 4
+Agent: Super Z (main)
+Task: 修复时区检测覆盖 + 历史记录添加复制按钮
+
+Work Log:
+- 修复 `src/lib/i18n.ts` 时区检测：从逐个 `===` 判断改为 `ReadonlySet<string>` 集合查找
+  - 新增 Asia/Harbin、Asia/Chongqing、Asia/Kashgar 到中国大陆时区集合
+  - 现在覆盖 5 个 IANA 时区标识符
+- 修改 `src/app/[[...slug]]/page.tsx`：
+  - 添加 `copiedHistoryId` 状态追踪历史记录的复制状态
+  - 新增 `handleCopyHistory()` 回调，直接复制历史记录中的隐形链接
+  - 历史记录每项 hover 时显示复制按钮（Copy 图标）和删除按钮（Trash2 图标）
+  - 复制成功后显示 Check 图标，2 秒后恢复
+- 添加 i18n 翻译 key：`copyHistory`（en: Copy / zh-CN: 复制 / zh-TW: 複製）
+- 更新 README.md 时区说明表格，列出所有 5 个大陆时区
+- Lint 检查通过
+
+Stage Summary:
+- 时区检测现在覆盖 Asia/Shanghai, Asia/Urumqi, Asia/Harbin, Asia/Chongqing, Asia/Kashgar
+- 历史记录支持一键复制隐形链接，hover 显示复制和删除两个按钮

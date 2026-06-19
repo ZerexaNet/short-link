@@ -6,13 +6,24 @@ import { useMemo } from 'react';
 
 export type Locale = 'zh-CN' | 'zh-TW' | 'en';
 
+// All IANA timezone identifiers that map to mainland China.
+// Asia/Shanghai covers Beijing, Shanghai, Chongqing, Harbin, Guangzhou, Chengdu,
+//   Wuhan, Nanjing, Hangzhou, Shenyang, Urumqi (official), and most eastern cities.
+// Asia/Urumqi  covers Xinjiang (UTC+6 unofficial, used by many residents).
+// Asia/Kashgar is an alias for Asia/Urumqi in some older tzdata versions.
+const MAINLAND_CN_TIMEZONES: ReadonlySet<string> = new Set([
+  'Asia/Shanghai',
+  'Asia/Urumqi',
+  'Asia/Kashgar',
+  'Asia/Harbin',
+  'Asia/Chongqing',
+]);
+
 function detectLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    // Mainland China: Asia/Shanghai covers Beijing/Chongqing/Harbin etc.,
-    // Asia/Urumqi covers Xinjiang
-    if (tz === 'Asia/Shanghai' || tz === 'Asia/Urumqi') return 'zh-CN';
+    if (MAINLAND_CN_TIMEZONES.has(tz)) return 'zh-CN';
     // Hong Kong, Macau, Taiwan
     if (
       tz === 'Asia/Hong_Kong' ||
@@ -67,6 +78,7 @@ const dictionaries = {
     toastCopyFailed: 'Copy failed, please select and copy manually',
     toastHistoryCleared: 'History cleared',
     toastInvalidUrl: 'Please enter a valid URL',
+    copyHistory: 'Copy',
     // steps
     step1Title: 'Encode',
     step1Desc: 'The target URL is converted to UTF-8 bytes, then encoded with 4 zero-width characters in Base-4. Each character carries 2 bits of information.',
@@ -114,6 +126,7 @@ const dictionaries = {
     toastCopyFailed: '\u590D\u5236\u5931\u8D25\uFF0C\u8BF7\u624B\u52A8\u9009\u4E2D\u590D\u5236',
     toastHistoryCleared: '\u5386\u53F2\u8BB0\u5F55\u5DF2\u6E05\u7A7A',
     toastInvalidUrl: '\u8BF7\u8F93\u5165\u6709\u6548\u7684 URL',
+    copyHistory: '\u590D\u5236',
     step1Title: '\u7F16\u7801',
     step1Desc: '\u5C06\u76EE\u6807 URL \u8F6C\u4E3A UTF-8 \u5B57\u8282\uFF0C\u518D\u7528 4 \u79CD\u96F6\u5BBD\u5B57\u7B26\u8FDB\u884C Base-4 \u7F16\u7801\uFF0C\u6BCF\u4E2A\u5B57\u7B26\u643A\u5E26 2 bit \u4FE1\u606F\u3002',
     step2Title: '\u5D4C\u5165',
@@ -158,6 +171,7 @@ const dictionaries = {
     toastCopyFailed: '\u8907\u88FD\u5931\u6557\uFF0C\u8ACB\u624B\u52D5\u9078\u4E2D\u8907\u88FD',
     toastHistoryCleared: '\u6B77\u53F2\u8A18\u9304\u5DF2\u6E05\u7A7A',
     toastInvalidUrl: '\u8ACB\u8F38\u5165\u6709\u6548\u7684 URL',
+    copyHistory: '\u8907\u88FD',
     step1Title: '\u7DE8\u78BC',
     step1Desc: '\u5C07\u76EE\u6A19 URL \u8F49\u70BA UTF-8 \u4F4D\u5143\u7D44\uFF0C\u518D\u7528 4 \u7A2E\u96F6\u5BBD\u5B57\u5143\u9032\u884C Base-4 \u7DE8\u78BC\uFF0C\u6BCF\u500B\u5B57\u5143\u643A\u5E36 2 bit \u8CC7\u8A0A\u3002',
     step2Title: '\u5D4C\u5165',
