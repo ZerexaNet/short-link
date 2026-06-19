@@ -56,26 +56,26 @@ function saveHistory(items: HistoryItem[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Step indicator icons for "How it works"
+// Static data
 // ---------------------------------------------------------------------------
 
 const STEPS = [
   {
     num: '01',
-    title: '编码',
-    desc: '将目标 URL 转为 UTF-8 字节，再用 4 种零宽字符进行 Base-4 编码，每个字符携带 2 bit 信息。',
+    title: 'Encode',
+    desc: 'The target URL is converted to UTF-8 bytes, then encoded with 4 zero-width characters in Base-4. Each character carries 2 bits of information.',
     Icon: Shield,
   },
   {
     num: '02',
-    title: '嵌入',
-    desc: '编码后的零宽字符序列被嵌入到 URL 路径中。它们不占任何可见空间，链接看起来就是根路径。',
+    title: 'Embed',
+    desc: 'The encoded zero-width character sequence is embedded into the URL path. It occupies no visible space, so the link looks identical to the root path.',
     Icon: Link2,
   },
   {
     num: '03',
-    title: '解码跳转',
-    desc: '访问者打开链接后，前端自动检测路径中的零宽字符，实时解码还原原始 URL 并立即跳转。',
+    title: 'Decode & Redirect',
+    desc: 'When a visitor opens the link, the frontend automatically detects the zero-width characters, decodes the original URL, and redirects immediately.',
     Icon: Zap,
   },
 ];
@@ -93,18 +93,16 @@ const CHAR_TABLE = [
 
 export default function ZeroWidthLinkPage() {
   const params = useParams();
-  // Next.js decodes the path for us, but guard against double-encoding
   const slug = (params.slug as string[] | undefined) ?? undefined;
-  // Next.js may pass percent-encoded characters; decode them so we can detect ZWCs
   const pathSegment = slug
     ? decodeURIComponent(slug.join('/'))
     : '';
 
-  // -- derived route info (no effect needed) --
+  // -- derived route info --
   const routeMode = useMemo((): 'generator' | 'redirect' => {
     if (pathSegment && containsZeroWidthChars(pathSegment)) {
       try {
-        decodeZeroWidth(pathSegment); // validate
+        decodeZeroWidth(pathSegment);
         return 'redirect';
       } catch {
         return 'generator';
@@ -137,7 +135,7 @@ export default function ZeroWidthLinkPage() {
     return window.location.origin;
   }, []);
 
-  // -- redirect timer (no setState) --
+  // -- redirect timer --
   useEffect(() => {
     if (routeMode === 'redirect' && isRedirecting && decodedUrl) {
       const timer = setTimeout(() => {
@@ -151,7 +149,7 @@ export default function ZeroWidthLinkPage() {
   const handleGenerate = useCallback(() => {
     const raw = url.trim();
     if (!raw) {
-      toast.error('请输入有效的 URL');
+      toast.error('Please enter a valid URL');
       return;
     }
     let normalized = raw;
@@ -171,9 +169,9 @@ export default function ZeroWidthLinkPage() {
       const next = [item, ...history].slice(0, 30);
       setHistory(next);
       saveHistory(next);
-      toast.success('链接生成成功');
+      toast.success('Link generated');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '编码失败');
+      toast.error(err instanceof Error ? err.message : 'Encoding failed');
     }
   }, [url, history]);
 
@@ -182,10 +180,10 @@ export default function ZeroWidthLinkPage() {
     try {
       await navigator.clipboard.writeText(full);
       setCopied(true);
-      toast.success('隐形链接已复制到剪贴板');
+      toast.success('Invisible link copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('复制失败，请手动选中复制');
+      toast.error('Copy failed, please select and copy manually');
     }
   }, [encoded, origin]);
 
@@ -211,7 +209,7 @@ export default function ZeroWidthLinkPage() {
   const handleClearHistory = useCallback(() => {
     setHistory([]);
     saveHistory([]);
-    toast.success('历史记录已清空');
+    toast.success('History cleared');
   }, []);
 
   // ===================================================================
@@ -219,11 +217,10 @@ export default function ZeroWidthLinkPage() {
   // ===================================================================
   if (routeMode === 'redirect') {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center relative overflow-hidden">
-        {/* bg effects */}
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center relative overflow-hidden">
         <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-500/20 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] dark:bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] animate-pulse" />
         </div>
 
         <motion.div
@@ -232,20 +229,19 @@ export default function ZeroWidthLinkPage() {
           className="relative z-10 text-center px-6"
         >
           <motion.div
-            className="w-16 h-16 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full mx-auto mb-6"
+            className="w-16 h-16 border-2 border-primary/20 border-t-primary rounded-full mx-auto mb-6"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <h1 className="text-2xl font-bold mb-3">正在跳转</h1>
-          <p className="text-emerald-400/80 font-mono text-sm max-w-md break-all mb-8">
+          <h1 className="text-2xl font-bold mb-3">Redirecting</h1>
+          <p className="text-muted-foreground font-mono text-sm max-w-md break-all mb-8">
             {decodedUrl}
           </p>
           <Button
             variant="outline"
-            className="border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
             onClick={() => setIsRedirecting(false)}
           >
-            取消跳转
+            Cancel
           </Button>
         </motion.div>
 
@@ -258,12 +254,12 @@ export default function ZeroWidthLinkPage() {
   // Generator page
   // ===================================================================
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden flex flex-col">
-      {/* ---- animated background ---- */}
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden flex flex-col">
+      {/* ---- subtle grid background ---- */}
       <div className="fixed inset-0 pointer-events-none select-none" aria-hidden>
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(16,185,129,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(16,185,129,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
-        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-emerald-500/[0.07] rounded-full blur-[140px]" />
-        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-emerald-600/[0.07] rounded-full blur-[140px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.025)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.025)_1px,transparent_1px)] bg-[size:40px_40px] dark:bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)]" />
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-[140px]" />
+        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] bg-primary/[0.03] rounded-full blur-[140px]" />
       </div>
 
       {/* ---- content ---- */}
@@ -275,27 +271,26 @@ export default function ZeroWidthLinkPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-4 py-1.5 mb-6">
-              <Zap className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-emerald-400 text-xs font-medium tracking-wide">
-                零宽隐形链接生成器
+            <div className="inline-flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-1.5 mb-6">
+              <Zap className="w-3.5 h-3.5 text-foreground" />
+              <span className="text-muted-foreground text-xs font-medium tracking-wide">
+                Zero-Width Link Generator
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-              <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-teal-400 bg-clip-text text-transparent">
-                看不见的链接
-              </span>
+              Invisible Links
             </h1>
 
-            <p className="text-gray-400 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-              使用 UTF-8 零宽字符编码 URL，生成视觉上完全不可见的隐形短链接。
+            <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+              Encode URLs using UTF-8 zero-width characters to create visually
+              identical short links.
               <br className="hidden sm:block" />
-              所有链接看起来都是{' '}
-              <code className="text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded text-sm font-mono">
+              Every link looks exactly like{' '}
+              <code className="bg-muted text-foreground px-2 py-0.5 rounded text-sm font-mono">
                 /
-              </code>
-              ，但暗藏玄机。
+              </code>{' '}
+              to the naked eye.
             </p>
           </motion.section>
 
@@ -305,23 +300,23 @@ export default function ZeroWidthLinkPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
           >
-            <Card className="bg-[#111111]/80 border-emerald-500/20 backdrop-blur-sm mb-10">
+            <Card className="border-border backdrop-blur-sm mb-10">
               <CardContent className="p-5 sm:p-6">
                 {/* Input row */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Input
-                    placeholder="输入目标 URL，例如 https://example.com"
+                    placeholder="Enter target URL, e.g. https://example.com"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                    className="flex-1 bg-[#0a0a0a] border-emerald-500/20 focus:border-emerald-500/50 text-white placeholder:text-gray-600 font-mono text-sm h-11"
+                    className="flex-1 bg-background border-border focus:border-primary/50 font-mono text-sm h-11"
                   />
                   <Button
                     onClick={handleGenerate}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-6 h-11 min-w-[120px]"
+                    className="bg-foreground hover:bg-foreground/90 text-background font-medium px-6 h-11 min-w-[120px]"
                   >
                     <Zap className="w-4 h-4 mr-2" />
-                    生成链接
+                    Generate
                   </Button>
                 </div>
 
@@ -337,30 +332,27 @@ export default function ZeroWidthLinkPage() {
                       <div className="mt-6">
                         {/* meta row */}
                         <div className="flex items-center gap-2 mb-3">
-                          <Badge
-                            variant="outline"
-                            className="border-emerald-500/30 text-emerald-400 text-xs"
-                          >
-                            生成结果
+                          <Badge variant="outline" className="text-xs">
+                            Result
                           </Badge>
                           {encodingInfo && (
-                            <span className="text-gray-500 text-xs">
-                              {encodingInfo.originalLength} 字符 →{' '}
-                              {encodingInfo.encodedLength} 零宽字符
+                            <span className="text-muted-foreground text-xs">
+                              {encodingInfo.originalLength} chars &rarr;{' '}
+                              {encodingInfo.encodedLength} zero-width chars
                             </span>
                           )}
                         </div>
 
                         {/* visual URL box */}
-                        <div className="bg-[#0a0a0a] rounded-lg border border-emerald-500/20 p-4 mb-4">
+                        <div className="bg-muted rounded-lg border border-border p-4 mb-4">
                           <div className="flex items-center justify-between mb-2">
-                            <span className="text-gray-500 text-xs">
-                              隐形链接（零宽字符不可见）
+                            <span className="text-muted-foreground text-xs">
+                              Invisible link (zero-width chars hidden)
                             </span>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="text-gray-500 hover:text-emerald-400 h-7 text-xs gap-1"
+                              className="text-muted-foreground hover:text-foreground h-7 text-xs gap-1"
                               onClick={() => setShowEncoded((v) => !v)}
                             >
                               {showEncoded ? (
@@ -368,19 +360,18 @@ export default function ZeroWidthLinkPage() {
                               ) : (
                                 <Eye className="w-3 h-3" />
                               )}
-                              {showEncoded ? '隐藏编码' : '显示编码'}
+                              {showEncoded ? 'Hide' : 'Show'}
                             </Button>
                           </div>
 
                           {/* what the link "looks like" */}
                           <div className="font-mono text-sm break-all leading-relaxed select-all">
-                            <span className="text-gray-400">{origin}</span>
-                            <span className="text-emerald-400">/</span>
+                            <span className="text-muted-foreground">{origin}</span>
+                            <span className="text-foreground">/</span>
                             <span
-                              className="text-emerald-300/60"
-                              title="此处包含不可见的零宽字符"
+                              className="text-muted-foreground/50"
+                              title="Contains invisible zero-width characters here"
                             >
-                              {/* invisible chars are here */}
                               {showEncoded
                                 ? visualizeZeroWidth(encoded)
                                 : '\u200B'.repeat(
@@ -395,9 +386,9 @@ export default function ZeroWidthLinkPage() {
                                 initial={{ opacity: 0, height: 0 }}
                                 animate={{ opacity: 1, height: 'auto' }}
                                 exit={{ opacity: 0, height: 0 }}
-                                className="mt-2 text-xs text-gray-600 font-mono break-all overflow-hidden"
+                                className="mt-2 text-xs text-muted-foreground font-mono break-all overflow-hidden"
                               >
-                                可视化: {visualizeZeroWidth(encoded)}
+                                Visualized: {visualizeZeroWidth(encoded)}
                               </motion.p>
                             )}
                           </AnimatePresence>
@@ -408,22 +399,22 @@ export default function ZeroWidthLinkPage() {
                           <Button
                             onClick={handleCopy}
                             variant="outline"
-                            className="flex-1 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300"
+                            className="flex-1 text-foreground"
                           >
                             {copied ? (
                               <Check className="w-4 h-4 mr-2" />
                             ) : (
                               <Copy className="w-4 h-4 mr-2" />
                             )}
-                            {copied ? '已复制' : '复制隐形链接'}
+                            {copied ? 'Copied' : 'Copy invisible link'}
                           </Button>
                           <Button
                             onClick={handleTest}
                             variant="outline"
-                            className="border-gray-700 text-gray-400 hover:bg-gray-800 hover:text-gray-300"
+                            className="text-foreground"
                           >
                             <ExternalLink className="w-4 h-4 mr-2" />
-                            测试
+                            Test
                           </Button>
                         </div>
 
@@ -434,12 +425,12 @@ export default function ZeroWidthLinkPage() {
                               ([name, count]) => (
                                 <div
                                   key={name}
-                                  className="bg-[#0a0a0a] rounded-lg p-3 border border-gray-800 text-center"
+                                  className="bg-muted rounded-lg p-3 border border-border text-center"
                                 >
-                                  <div className="text-emerald-400 font-mono text-lg font-bold">
+                                  <div className="text-foreground font-mono text-lg font-bold">
                                     {count}
                                   </div>
-                                  <div className="text-gray-500 text-[11px]">
+                                  <div className="text-muted-foreground text-[11px]">
                                     {name}
                                   </div>
                                 </div>
@@ -462,24 +453,24 @@ export default function ZeroWidthLinkPage() {
             transition={{ delay: 0.16 }}
             className="mb-10"
           >
-            <h2 className="text-xl font-bold mb-6 text-center">工作原理</h2>
+            <h2 className="text-xl font-bold mb-6 text-center">How It Works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {STEPS.map((s) => (
                 <Card
                   key={s.num}
-                  className="bg-[#111111]/80 border-gray-800 hover:border-emerald-500/30 transition-colors group"
+                  className="border-border hover:border-primary/30 transition-colors group"
                 >
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500/20 transition-colors">
+                      <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-foreground group-hover:bg-muted-foreground/10 transition-colors">
                         <s.Icon className="w-5 h-5" />
                       </div>
-                      <span className="text-xs text-emerald-400/60 font-mono">
+                      <span className="text-xs text-muted-foreground font-mono">
                         {s.num}
                       </span>
                     </div>
                     <h3 className="font-semibold mb-2">{s.title}</h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">
+                    <p className="text-muted-foreground text-sm leading-relaxed">
                       {s.desc}
                     </p>
                   </CardContent>
@@ -495,20 +486,24 @@ export default function ZeroWidthLinkPage() {
             transition={{ delay: 0.22 }}
             className="mb-10"
           >
-            <Card className="bg-[#111111]/80 border-gray-800">
+            <Card className="border-border">
               <CardContent className="p-5">
-                <h3 className="font-semibold mb-4">零宽字符参考表</h3>
+                <h3 className="font-semibold mb-4">
+                  Zero-Width Character Reference
+                </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {CHAR_TABLE.map((c) => (
                     <div
                       key={c.code}
-                      className="bg-[#0a0a0a] rounded-lg p-3 border border-gray-800 text-center"
+                      className="bg-muted rounded-lg p-3 border border-border text-center"
                     >
-                      <div className="text-emerald-400 font-mono text-sm font-bold">
+                      <div className="text-foreground font-mono text-sm font-bold">
                         {c.code}
                       </div>
-                      <div className="text-gray-400 text-xs mt-1">{c.name}</div>
-                      <div className="mt-2 inline-block px-2 py-0.5 bg-emerald-500/10 rounded border border-emerald-500/20 font-mono text-xs text-emerald-300">
+                      <div className="text-muted-foreground text-xs mt-1">
+                        {c.name}
+                      </div>
+                      <div className="mt-2 inline-block px-2 py-0.5 bg-background rounded border border-border font-mono text-xs text-foreground">
                         {c.bits}
                       </div>
                     </div>
@@ -527,19 +522,19 @@ export default function ZeroWidthLinkPage() {
               className="mb-10"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">历史记录</h2>
+                <h2 className="text-xl font-bold">History</h2>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-gray-500 hover:text-red-400 gap-1"
+                  className="text-muted-foreground hover:text-destructive gap-1"
                   onClick={handleClearHistory}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  清空
+                  Clear
                 </Button>
               </div>
 
-              <div className="space-y-2 max-h-72 overflow-y-auto pr-1 custom-scrollbar">
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                 {history.map((item) => (
                   <div
                     key={item.id}
@@ -548,25 +543,27 @@ export default function ZeroWidthLinkPage() {
                     onKeyDown={(e) =>
                       e.key === 'Enter' && handleLoadHistory(item)
                     }
-                    className="flex items-center gap-3 bg-[#111111]/80 border border-gray-800 rounded-lg p-3 hover:border-emerald-500/30 transition-colors group cursor-pointer"
+                    className="flex items-center gap-3 border border-border rounded-lg p-3 hover:border-primary/30 transition-colors group cursor-pointer"
                     onClick={() => handleLoadHistory(item)}
                   >
-                    <Link2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <Link2 className="w-4 h-4 text-foreground shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-mono text-sm truncate">{item.originalUrl}</p>
-                      <p className="text-gray-500 text-[11px] mt-0.5">
-                        {new Date(item.createdAt).toLocaleString('zh-CN')}
+                      <p className="font-mono text-sm truncate">
+                        {item.originalUrl}
+                      </p>
+                      <p className="text-muted-foreground text-[11px] mt-0.5">
+                        {new Date(item.createdAt).toLocaleString('en-US')}
                       </p>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-red-400 h-8 w-8 p-0 shrink-0"
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive h-8 w-8 p-0 shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteHistory(item.id);
                       }}
-                      aria-label="删除"
+                      aria-label="Delete"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
@@ -579,9 +576,9 @@ export default function ZeroWidthLinkPage() {
       </main>
 
       {/* ---- Footer ---- */}
-      <footer className="relative z-10 border-t border-gray-800/50 py-6 mt-auto">
-        <p className="text-center text-gray-600 text-sm">
-          Zero-Width Link Generator · 使用零宽字符编码的隐形链接工具
+      <footer className="relative z-10 border-t border-border py-6 mt-auto">
+        <p className="text-center text-muted-foreground text-sm">
+          Zero-Width Link Generator
         </p>
       </footer>
 

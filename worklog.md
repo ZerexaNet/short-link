@@ -25,3 +25,25 @@ Stage Summary:
 - 编码方案：UTF-8 字节 → 2字节长度头 + 数据 → Base-4 零宽字符编码
 - UI：暗色主题，网格背景动画，emerald 强调色，响应式设计
 - 功能：URL 编码/解码、复制隐形链接、编码可视化、历史记录、自动重定向
+
+---
+Task ID: 2
+Agent: Super Z (main)
+Task: UI 改为全白主题 + 黑色按钮 + 明暗模式切换 + README 部署文档
+
+Work Log:
+- 创建 `src/components/theme-provider.tsx` (next-themes wrapper)
+- 创建 `src/components/theme-toggle.tsx` (Sun/Moon 切换按钮)
+- 更新 `layout.tsx` 集成 ThemeProvider (defaultTheme=light)，放置切换按钮于右上角
+- 重写 `globals.css`：:root 白色系 CSS 变量，.dark 暗色系变量
+- 重写 `page.tsx`：移除所有硬编码暗色值 (#0a0a0a, emerald-xxx 等)，改用 bg-background/text-foreground/border-border/muted 等主题变量；按钮文字黑色 (bg-foreground text-background)；移除所有 emoji；文案改为英文
+- 修复 ThemeToggle lint 错误 (set-state-in-effect)
+- Agent Browser 验证：
+  - 亮色模式：白底、黑色按钮文字、生成链接正常
+  - 切换暗色模式：正常切换
+  - 暗色模式下重定向：正常工作
+- 撰写 README.md，包含 Vercel / Netlify / Cloudflare Workers 三平台部署教程
+
+Stage Summary:
+- 页面默认全白，按钮文字黑色，右上角有明暗切换按钮
+- README.md 含 Vercel (Git/CLI)、Netlify (Git/CLI + Essential Plugin)、Cloudflare Workers (@opennextjs/cloudflare + wrangler) 完整部署指引

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,20 +17,20 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Zero-Width Link Generator",
   description:
-    "使用 UTF-8 零宽字符在 URL 路径中编码完整链接，生成视觉上完全不可见的隐形短链接。",
+    "Use UTF-8 zero-width characters to encode URLs into visually invisible short links.",
   keywords: [
     "zero-width",
     "invisible link",
     "URL encoder",
     "steganography",
-    "零宽字符",
+    "ZWC",
   ],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
     title: "Zero-Width Link Generator",
-    description: "生成视觉上完全不可见的隐形短链接",
+    description: "Generate visually invisible short links using zero-width characters",
     type: "website",
   },
 };
@@ -44,8 +45,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        {children}
-        <Toaster />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem={false}
+          disableTransitionOnChange
+        >
+          <div className="fixed top-4 right-4 z-50">
+            <ThemeToggle />
+          </div>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
