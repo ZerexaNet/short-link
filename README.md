@@ -36,7 +36,8 @@
 
 | 时区 | 语言 |
 |------|------|
-| `Asia/Shanghai`（中国大陆） | 简体中文 |
+| `Asia/Shanghai`（大陆东部：北京、上海、重庆、哈尔滨等） | 简体中文 |
+| `Asia/Urumqi`（新疆：乌鲁木齐、喀什等） | 简体中文 |
 | `Asia/Hong_Kong`、`Asia/Macau`、`Asia/Taipei`（港澳台） | 繁体中文 |
 | 其他所有地区 | English |
 

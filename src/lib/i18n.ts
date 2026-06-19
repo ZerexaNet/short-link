@@ -10,7 +10,10 @@ function detectLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
   try {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (tz === 'Asia/Shanghai') return 'zh-CN';
+    // Mainland China: Asia/Shanghai covers Beijing/Chongqing/Harbin etc.,
+    // Asia/Urumqi covers Xinjiang
+    if (tz === 'Asia/Shanghai' || tz === 'Asia/Urumqi') return 'zh-CN';
+    // Hong Kong, Macau, Taiwan
     if (
       tz === 'Asia/Hong_Kong' ||
       tz === 'Asia/Macau' ||
