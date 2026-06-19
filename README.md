@@ -1,124 +1,135 @@
-# Zero-Width Link Generator
+# 零宽隐形链接生成器
 
-Encode URLs into visually invisible short links using UTF-8 zero-width characters. All generated links look identical to `/` but carry encoded target URLs that are automatically decoded and redirected on visit.
+使用 UTF-8 零宽字符在 URL 路径中编码完整链接，生成视觉上完全不可见的隐形短链接。所有生成的链接看起来都与 `/` 一模一样，但暗藏目标 URL，访问时自动解码跳转。
 
-## How It Works
+## 工作原理
 
 ```
-Target URL ──► UTF-8 bytes ──► Base-4 zero-width encoding ──► URL path (invisible)
-                                                                          │
-Visitor opens link ──► Frontend detects ZWCs ──► Decode ──► Redirect to target
+目标 URL → UTF-8 字节 → Base-4 零宽编码 → URL 路径（不可见）
+                                                    |
+访问者打开链接 → 前端检测零宽字符 → 解码 → 跳转到目标地址
 ```
 
-Four zero-width characters are used as a Base-4 alphabet (2 bits each):
+使用 4 种零宽字符作为 Base-4 字母表（每个字符携带 2 bit）：
 
-| Character | Unicode | Bits |
-|-----------|---------|------|
-| Zero Width Space | U+200B | 00 |
-| Zero Width Non-Joiner | U+200C | 01 |
-| Zero Width Joiner | U+200D | 10 |
-| Zero Width No-Break Space | U+FEFF | 11 |
+| 字符 | Unicode | 编码 |
+|------|---------|------|
+| 零宽空格 | U+200B | 00 |
+| 零宽非连接符 | U+200C | 01 |
+| 零宽连接符 | U+200D | 10 |
+| 零宽无断行空格 | U+FEFF | 11 |
 
-Wire format: `[2-byte big-endian length] [URL UTF-8 bytes]` -> Base-4 ZWC string.
+传输格式：`[2 字节大端长度] [URL 的 UTF-8 字节]` → Base-4 零宽字符串。
 
-## Tech Stack
+## 技术栈
 
-- Next.js 16 (App Router, catch-all routes)
+- Next.js 16（App Router，catch-all 路由）
 - TypeScript 5
 - Tailwind CSS 4 + shadcn/ui
-- next-themes (light/dark mode)
-- framer-motion (animations)
+- next-themes（明暗模式切换）
+- framer-motion（动画）
+- 客户端 i18n（按时区自动检测语言）
+
+## 国际化
+
+页面根据访问者的浏览器时区自动切换语言，无需手动选择：
+
+| 时区 | 语言 |
+|------|------|
+| `Asia/Shanghai`（中国大陆） | 简体中文 |
+| `Asia/Hong_Kong`、`Asia/Macau`、`Asia/Taipei`（港澳台） | 繁体中文 |
+| 其他所有地区 | English |
 
 ---
 
-## Local Development
+## 本地开发
 
 ```bash
-# Install dependencies
+# 安装依赖
 bun install
 
-# Start dev server (port 3000)
+# 启动开发服务器（端口 3000）
 bun run dev
 
-# Lint
+# 代码检查
 bun run lint
 ```
 
 ---
 
-## Deploy to Vercel
+## 部署到 Vercel
 
-The project uses `output: "standalone"` in `next.config.ts`. Vercel handles Next.js natively, so deployment is straightforward.
+项目在 `next.config.ts` 中使用 `output: "standalone"`。Vercel 原生支持 Next.js，部署非常简单。
 
-### Method 1: Git Integration (Recommended)
+### 方式一：Git 集成（推荐）
 
-1. Push your project to GitHub / GitLab / Bitbucket.
-2. Go to [vercel.com](https://vercel.com) and click **"New Project"**.
-3. Import your repository.
-4. Vercel auto-detects Next.js. No build settings to change.
-5. Click **Deploy**.
+1. 将项目推送到 GitHub / GitLab / Bitbucket。
+2. 访问 [vercel.com](https://vercel.com)，点击 **"New Project"**。
+3. 导入你的仓库。
+4. Vercel 会自动识别 Next.js，无需修改构建配置。
+5. 点击 **Deploy**。
 
-### Method 2: Vercel CLI
+### 方式二：Vercel CLI
 
 ```bash
-# Install Vercel CLI
+# 安装 Vercel CLI
 npm i -g vercel
 
-# Deploy (follows interactive prompts)
+# 部署（跟随交互式提示）
 vercel
 
-# Deploy to production
+# 部署到生产环境
 vercel --prod
 ```
 
-### Important Notes for Vercel
+### 注意事项
 
-- Vercel auto-handles the `[[...slug]]` catch-all route. No extra configuration needed.
-- Zero-width characters in URLs are percent-encoded by the browser (e.g., `%E2%80%8B`). The app handles this with `decodeURIComponent()` on the server route param, so decoding works correctly.
-- If you have a custom domain, make sure your DNS is configured to point to Vercel.
+- Vercel 自动处理 `[[...slug]]` catch-all 路由，无需额外配置。
+- 浏览器会将零宽字符 percent-encode（例如 `%E2%80%8B`），应用通过 `decodeURIComponent()` 处理，解码正常工作。
+- 如果使用自定义域名，确保 DNS 已配置指向 Vercel。
 
 ---
 
-## Deploy to Netlify
+## 部署到 Netlify
 
-Netlify supports Next.js via the **Essential Next.js plugin**.
+Netlify 通过 **Essential Next.js 插件** 支持 Next.js。
 
-### Method 1: Git Integration (Recommended)
+### 方式一：Git 集成（推荐）
 
-1. Push your project to GitHub / GitLab.
-2. Go to [app.netlify.com](https://app.netlify.com) and click **"Add new site" > "Import an existing project"**.
-3. Connect your Git provider and select the repository.
-4. Set the build settings:
+1. 将项目推送到 GitHub / GitLab。
+2. 访问 [app.netlify.com](https://app.netlify.com)，点击 **"Add new site" > "Import an existing project"**。
+3. 连接 Git 仓库。
+4. 构建设置：
 
-| Setting | Value |
-|---------|-------|
+| 设置项 | 值 |
+|--------|-----|
 | Build command | `npx @netlify/plugin-nextjs@experimental` then `npx next build` |
 | Publish directory | `.next` |
 
-   Or simply let Netlify auto-detect Next.js (it should prompt you to install the Essential Next.js plugin).
+   也可以让 Netlify 自动识别 Next.js（会提示安装 Essential Next.js 插件）。
 
-5. Click **Deploy site**.
+5. 点击 **Deploy site**。
 
-### Method 2: Netlify CLI
+### 方式二：Netlify CLI
 
 ```bash
-# Install Netlify CLI
+# 安装 Netlify CLI
 npm i -g netlify-cli
 
-# Login
+# 登录
 netlify login
 
-# Deploy (follows interactive prompts)
+# 部署（跟随交互式提示）
 netlify deploy
 
-# Deploy to production
+# 部署到生产环境
 netlify deploy --prod
 ```
 
-### Important Notes for Netlify
+### 注意事项
 
-- The **Netlify Essential Next.js plugin** (`@netlify/plugin-nextjs`) is required for catch-all routes and SSR to work properly. Without it, the `[[...slug]]` route will return 404.
-- If you use `netlify.toml`, add:
+- **必须安装 Netlify Essential Next.js 插件**（`@netlify/plugin-nextjs`），否则 catch-all 路由和 SSR 无法正常工作，`[[...slug]]` 路由会返回 404。
+- 如果使用 `netlify.toml`，添加以下配置：
 
 ```toml
 [build]
@@ -129,30 +140,30 @@ netlify deploy --prod
   package = "@netlify/plugin-nextjs"
 ```
 
-- Netlify Functions are not needed. The zero-width decoding happens entirely in the client (React `useMemo`), so there is no server-side logic requirement.
+- 零宽解码完全在客户端完成（React `useMemo`），不需要 Netlify Functions。
 
 ---
 
-## Deploy to Cloudflare Workers
+## 部署到 Cloudflare Workers
 
-This is a static + SSR Next.js app, so it deploys to Cloudflare via **@opennextjs/cloudflare** (the successor to the deprecated `@cloudflare/next-on-pages`).
+本项目是 Next.js 应用，可通过 **@opennextjs/cloudflare**（`@cloudflare/next-on-pages` 的后续替代方案）部署到 Cloudflare。
 
-### Prerequisites
+### 前置条件
 
 - Node.js 18+
-- A Cloudflare account with `wrangler` installed
-- Your project pushed to a Git repo (optional but recommended)
+- Cloudflare 账户，已安装 `wrangler`
+- 项目已推送到 Git 仓库（可选但推荐）
 
-### Steps
+### 步骤
 
-1. Install the Cloudflare adapter:
+1. 安装 Cloudflare 适配器：
 
 ```bash
 npm install -g wrangler
 bun add -d @opennextjs/cloudflare
 ```
 
-2. Create `wrangler.toml` in your project root:
+2. 在项目根目录创建 `wrangler.toml`：
 
 ```toml
 name = "zwc-link-generator"
@@ -165,7 +176,7 @@ compatibility_flags = ["nodejs_compat"]
   binding = "ASSETS"
 ```
 
-3. Update your `package.json` scripts:
+3. 更新 `package.json` 的 scripts：
 
 ```json
 {
@@ -178,49 +189,50 @@ compatibility_flags = ["nodejs_compat"]
 }
 ```
 
-4. Build and deploy:
+4. 构建和部署：
 
 ```bash
-# Build the project for Cloudflare
+# 为 Cloudflare 构建
 bun run build
 
-# Preview locally with wrangler
+# 本地预览
 bun run preview
 
-# Deploy to Cloudflare Workers
+# 部署到 Cloudflare Workers
 bun run deploy
 ```
 
-### Important Notes for Cloudflare Workers
+### 注意事项
 
-- The `[[...slug]]` catch-all route works out of the box with `@opennextjs/cloudflare`.
-- Cloudflare Workers have a **request body size limit of ~100 KB** and execution time limits depending on your plan. This app is purely client-side rendering for the decode logic, so limits are not a concern.
-- Zero-width characters will be percent-encoded by the browser before reaching the worker. The app decodes them client-side, so this is handled correctly.
-- Set `compatibility_flags = ["nodejs_compat"]` in `wrangler.toml` to ensure Node.js APIs are available during the build step.
-- If you encounter issues with static assets, verify the `ASSETS` binding in `wrangler.toml` points to `.open-next/assets`.
-
----
-
-## Environment Variables
-
-This project does not require any environment variables. All logic is client-side.
+- `[[...slug]]` catch-all 路由在 `@opennextjs/cloudflare` 下开箱即用。
+- Cloudflare Workers 有请求体大小限制（约 100 KB）和执行时间限制。本应用的解码逻辑完全在客户端运行，不受此限制。
+- 浏览器会将零宽字符 percent-encode，应用在客户端解码，无需额外处理。
+- 在 `wrangler.toml` 中设置 `compatibility_flags = ["nodejs_compat"]` 以确保构建步骤中 Node.js API 可用。
+- 如果静态资源有问题，检查 `wrangler.toml` 中的 `ASSETS` binding 是否指向 `.open-next/assets`。
 
 ---
 
-## Project Structure
+## 环境变量
+
+本项目不需要任何环境变量。所有逻辑均在客户端运行。
+
+---
+
+## 项目结构
 
 ```
 src/
   app/
-    [[...slug]]/page.tsx    # Catch-all route: generator UI + auto-redirect
-    layout.tsx               # Root layout with ThemeProvider
-    globals.css              # Light/dark theme CSS variables
+    [[...slug]]/page.tsx    # Catch-all 路由：生成器 UI + 自动解码跳转
+    layout.tsx               # 根布局，集成 ThemeProvider
+    globals.css              # 明/暗主题 CSS 变量
   lib/
-    zero-width.ts             # Core encode/decode library
+    zero-width.ts             # 核心编码/解码库
+    i18n.ts                   # 国际化字典和语言检测 hook
   components/
-    theme-provider.tsx         # next-themes wrapper
-    theme-toggle.tsx          # Light/dark toggle button
-    ui/                       # shadcn/ui components
+    theme-provider.tsx         # next-themes 封装
+    theme-toggle.tsx          # 明暗模式切换按钮
+    ui/                       # shadcn/ui 组件
 ```
 
 ---

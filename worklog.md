@@ -47,3 +47,22 @@ Work Log:
 Stage Summary:
 - 页面默认全白，按钮文字黑色，右上角有明暗切换按钮
 - README.md 含 Vercel (Git/CLI)、Netlify (Git/CLI + Essential Plugin)、Cloudflare Workers (@opennextjs/cloudflare + wrangler) 完整部署指引
+
+---
+Task ID: 3
+Agent: Super Z (main)
+Task: README 改中文 + 网页 i18n（按时区检测语言）
+
+Work Log:
+- 创建 `src/lib/i18n.ts`：三语言字典（en / zh-CN / zh-TW）+ 时区检测逻辑 + useT() hook
+  - Asia/Shanghai → zh-CN（简体中文）
+  - Asia/Hong_Kong, Asia/Macau, Asia/Taipei → zh-TW（繁体中文）
+  - 其他 → en
+- 重写 `page.tsx`：所有硬编码文本替换为 t.xxx 字典引用，包括 Hero/表单/结果/步骤/参考表/历史/重定向页面/Toast 消息
+- 重写 `README.md` 为中文，增加 i18n 说明章节
+- Agent Browser 验证：UTC 时区下英文渲染正确，生成/重定向功能正常
+- 时区映射逻辑单元测试通过（8 种时区全部正确）
+
+Stage Summary:
+- i18n 系统：按时区自动检测，无需用户手动切换
+- README.md 全中文，含三平台部署教程和 i18n 说明

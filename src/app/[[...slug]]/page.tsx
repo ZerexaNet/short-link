@@ -26,6 +26,7 @@ import {
   visualizeZeroWidth,
   getEncodingInfo,
 } from '@/lib/zero-width';
+import { useT } from '@/lib/i18n';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,35 +57,14 @@ function saveHistory(items: HistoryItem[]) {
 }
 
 // ---------------------------------------------------------------------------
-// Static data
+// Character table (Unicode codes are universal)
 // ---------------------------------------------------------------------------
 
-const STEPS = [
-  {
-    num: '01',
-    title: 'Encode',
-    desc: 'The target URL is converted to UTF-8 bytes, then encoded with 4 zero-width characters in Base-4. Each character carries 2 bits of information.',
-    Icon: Shield,
-  },
-  {
-    num: '02',
-    title: 'Embed',
-    desc: 'The encoded zero-width character sequence is embedded into the URL path. It occupies no visible space, so the link looks identical to the root path.',
-    Icon: Link2,
-  },
-  {
-    num: '03',
-    title: 'Decode & Redirect',
-    desc: 'When a visitor opens the link, the frontend automatically detects the zero-width characters, decodes the original URL, and redirects immediately.',
-    Icon: Zap,
-  },
-];
-
 const CHAR_TABLE = [
-  { code: 'U+200B', name: 'Zero Width Space', bits: '00' },
-  { code: 'U+200C', name: 'ZW Non-Joiner', bits: '01' },
-  { code: 'U+200D', name: 'ZW Joiner', bits: '10' },
-  { code: 'U+FEFF', name: 'ZW No-Break', bits: '11' },
+  { code: 'U+200B', key: 'zws' as const, bits: '00' },
+  { code: 'U+200C', key: 'zwnj' as const, bits: '01' },
+  { code: 'U+200D', key: 'zwj' as const, bits: '10' },
+  { code: 'U+FEFF', key: 'zwbsp' as const, bits: '11' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -92,11 +72,22 @@ const CHAR_TABLE = [
 // ---------------------------------------------------------------------------
 
 export default function ZeroWidthLinkPage() {
+  const { t } = useT();
   const params = useParams();
   const slug = (params.slug as string[] | undefined) ?? undefined;
   const pathSegment = slug
     ? decodeURIComponent(slug.join('/'))
     : '';
+
+  // -- steps with i18n keys --
+  const steps = useMemo(
+    () => [
+      { num: '01', title: t.step1Title, desc: t.step1Desc, Icon: Shield },
+      { num: '02', title: t.step2Title, desc: t.step2Desc, Icon: Link2 },
+      { num: '03', title: t.step3Title, desc: t.step3Desc, Icon: Zap },
+    ],
+    [t],
+  );
 
   // -- derived route info --
   const routeMode = useMemo((): 'generator' | 'redirect' => {
@@ -149,7 +140,7 @@ export default function ZeroWidthLinkPage() {
   const handleGenerate = useCallback(() => {
     const raw = url.trim();
     if (!raw) {
-      toast.error('Please enter a valid URL');
+      toast.error(t.toastInvalidUrl);
       return;
     }
     let normalized = raw;
@@ -169,23 +160,23 @@ export default function ZeroWidthLinkPage() {
       const next = [item, ...history].slice(0, 30);
       setHistory(next);
       saveHistory(next);
-      toast.success('Link generated');
+      toast.success(t.toastGenerated);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Encoding failed');
     }
-  }, [url, history]);
+  }, [url, history, t]);
 
   const handleCopy = useCallback(async () => {
     const full = `${origin}/${encoded}`;
     try {
       await navigator.clipboard.writeText(full);
       setCopied(true);
-      toast.success('Invisible link copied to clipboard');
+      toast.success(t.toastCopied);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Copy failed, please select and copy manually');
+      toast.error(t.toastCopyFailed);
     }
-  }, [encoded, origin]);
+  }, [encoded, origin, t]);
 
   const handleTest = useCallback(() => {
     window.open(`${origin}/${encoded}`, '_blank');
@@ -209,8 +200,8 @@ export default function ZeroWidthLinkPage() {
   const handleClearHistory = useCallback(() => {
     setHistory([]);
     saveHistory([]);
-    toast.success('History cleared');
-  }, []);
+    toast.success(t.toastHistoryCleared);
+  }, [t]);
 
   // ===================================================================
   // Redirect screen
@@ -233,7 +224,7 @@ export default function ZeroWidthLinkPage() {
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
           />
-          <h1 className="text-2xl font-bold mb-3">Redirecting</h1>
+          <h1 className="text-2xl font-bold mb-3">{t.redirecting}</h1>
           <p className="text-muted-foreground font-mono text-sm max-w-md break-all mb-8">
             {decodedUrl}
           </p>
@@ -241,7 +232,7 @@ export default function ZeroWidthLinkPage() {
             variant="outline"
             onClick={() => setIsRedirecting(false)}
           >
-            Cancel
+            {t.cancel}
           </Button>
         </motion.div>
 
@@ -274,23 +265,22 @@ export default function ZeroWidthLinkPage() {
             <div className="inline-flex items-center gap-2 bg-muted border border-border rounded-full px-4 py-1.5 mb-6">
               <Zap className="w-3.5 h-3.5 text-foreground" />
               <span className="text-muted-foreground text-xs font-medium tracking-wide">
-                Zero-Width Link Generator
+                {t.badge}
               </span>
             </div>
 
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-              Invisible Links
+              {t.title}
             </h1>
 
             <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-              Encode URLs using UTF-8 zero-width characters to create visually
-              identical short links.
+              {t.description[0]}
               <br className="hidden sm:block" />
-              Every link looks exactly like{' '}
+              {t.description[1]}{' '}
               <code className="bg-muted text-foreground px-2 py-0.5 rounded text-sm font-mono">
                 /
               </code>{' '}
-              to the naked eye.
+              {t.description[2]}
             </p>
           </motion.section>
 
@@ -305,7 +295,7 @@ export default function ZeroWidthLinkPage() {
                 {/* Input row */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Input
-                    placeholder="Enter target URL, e.g. https://example.com"
+                    placeholder={t.inputPlaceholder}
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
@@ -316,7 +306,7 @@ export default function ZeroWidthLinkPage() {
                     className="bg-foreground hover:bg-foreground/90 text-background font-medium px-6 h-11 min-w-[120px]"
                   >
                     <Zap className="w-4 h-4 mr-2" />
-                    Generate
+                    {t.generate}
                   </Button>
                 </div>
 
@@ -333,12 +323,14 @@ export default function ZeroWidthLinkPage() {
                         {/* meta row */}
                         <div className="flex items-center gap-2 mb-3">
                           <Badge variant="outline" className="text-xs">
-                            Result
+                            {t.result}
                           </Badge>
                           {encodingInfo && (
                             <span className="text-muted-foreground text-xs">
-                              {encodingInfo.originalLength} chars &rarr;{' '}
-                              {encodingInfo.encodedLength} zero-width chars
+                              {t.charsToZwc(
+                                encodingInfo.originalLength,
+                                encodingInfo.encodedLength,
+                              )}
                             </span>
                           )}
                         </div>
@@ -347,7 +339,7 @@ export default function ZeroWidthLinkPage() {
                         <div className="bg-muted rounded-lg border border-border p-4 mb-4">
                           <div className="flex items-center justify-between mb-2">
                             <span className="text-muted-foreground text-xs">
-                              Invisible link (zero-width chars hidden)
+                              {t.invisibleLinkLabel}
                             </span>
                             <Button
                               variant="ghost"
@@ -360,7 +352,7 @@ export default function ZeroWidthLinkPage() {
                               ) : (
                                 <Eye className="w-3 h-3" />
                               )}
-                              {showEncoded ? 'Hide' : 'Show'}
+                              {showEncoded ? t.hide : t.show}
                             </Button>
                           </div>
 
@@ -370,7 +362,6 @@ export default function ZeroWidthLinkPage() {
                             <span className="text-foreground">/</span>
                             <span
                               className="text-muted-foreground/50"
-                              title="Contains invisible zero-width characters here"
                             >
                               {showEncoded
                                 ? visualizeZeroWidth(encoded)
@@ -388,7 +379,7 @@ export default function ZeroWidthLinkPage() {
                                 exit={{ opacity: 0, height: 0 }}
                                 className="mt-2 text-xs text-muted-foreground font-mono break-all overflow-hidden"
                               >
-                                Visualized: {visualizeZeroWidth(encoded)}
+                                {t.visualized(visualizeZeroWidth(encoded))}
                               </motion.p>
                             )}
                           </AnimatePresence>
@@ -406,7 +397,7 @@ export default function ZeroWidthLinkPage() {
                             ) : (
                               <Copy className="w-4 h-4 mr-2" />
                             )}
-                            {copied ? 'Copied' : 'Copy invisible link'}
+                            {copied ? t.copied : t.copyLink}
                           </Button>
                           <Button
                             onClick={handleTest}
@@ -414,7 +405,7 @@ export default function ZeroWidthLinkPage() {
                             className="text-foreground"
                           >
                             <ExternalLink className="w-4 h-4 mr-2" />
-                            Test
+                            {t.test}
                           </Button>
                         </div>
 
@@ -453,9 +444,9 @@ export default function ZeroWidthLinkPage() {
             transition={{ delay: 0.16 }}
             className="mb-10"
           >
-            <h2 className="text-xl font-bold mb-6 text-center">How It Works</h2>
+            <h2 className="text-xl font-bold mb-6 text-center">{t.howItWorks}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {STEPS.map((s) => (
+              {steps.map((s) => (
                 <Card
                   key={s.num}
                   className="border-border hover:border-primary/30 transition-colors group"
@@ -488,9 +479,7 @@ export default function ZeroWidthLinkPage() {
           >
             <Card className="border-border">
               <CardContent className="p-5">
-                <h3 className="font-semibold mb-4">
-                  Zero-Width Character Reference
-                </h3>
+                <h3 className="font-semibold mb-4">{t.charReference}</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {CHAR_TABLE.map((c) => (
                     <div
@@ -501,7 +490,7 @@ export default function ZeroWidthLinkPage() {
                         {c.code}
                       </div>
                       <div className="text-muted-foreground text-xs mt-1">
-                        {c.name}
+                        {t[c.key]}
                       </div>
                       <div className="mt-2 inline-block px-2 py-0.5 bg-background rounded border border-border font-mono text-xs text-foreground">
                         {c.bits}
@@ -522,7 +511,7 @@ export default function ZeroWidthLinkPage() {
               className="mb-10"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">History</h2>
+                <h2 className="text-xl font-bold">{t.history}</h2>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -530,7 +519,7 @@ export default function ZeroWidthLinkPage() {
                   onClick={handleClearHistory}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  Clear
+                  {t.clear}
                 </Button>
               </div>
 
@@ -552,7 +541,7 @@ export default function ZeroWidthLinkPage() {
                         {item.originalUrl}
                       </p>
                       <p className="text-muted-foreground text-[11px] mt-0.5">
-                        {new Date(item.createdAt).toLocaleString('en-US')}
+                        {new Date(item.createdAt).toLocaleString(t.dateLocale)}
                       </p>
                     </div>
                     <Button
@@ -578,7 +567,7 @@ export default function ZeroWidthLinkPage() {
       {/* ---- Footer ---- */}
       <footer className="relative z-10 border-t border-border py-6 mt-auto">
         <p className="text-center text-muted-foreground text-sm">
-          Zero-Width Link Generator
+          {t.footer}
         </p>
       </footer>
 
